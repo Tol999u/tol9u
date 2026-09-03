@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  
+  <!-- 모바일 파일명 대신 표시될 타이틀 및 앱 이름 설정 -->
+  <title>테크포켓 (Tech Pocket)</title>
+  <meta name="apple-mobile-web-app-title" content="테크포켓">
+  <meta name="application-name" content="테크포켓">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <!-- 공유용 오픈그래프 메타태그 -->
+  <meta property="og:title" content="테크포켓 (Tech Pocket)">
+  <meta property="og:description" content="AI · 클라우드 · 네트워크 필수 용어 암기장">
+  <meta property="og:type" content="website">
+
+  <style>
+    /* 우클릭 및 텍스트 드래그 방지 */
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; 
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none; 
+    }
+    
+    body { background-color: #f8fafc; color: #1e293b; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 12px 12px 90px 12px; position: relative; }
+    
+    h1 { margin-top: 6px; margin-bottom: 4px; font-size: 22px; color: #0f172a; text-align: center; font-weight: 800; letter-spacing: -0.5px; }
+    p.subtitle { margin-bottom: 12px; color: #64748b; font-size: 12px; text-align: center; font-weight: 500; }
+    
+    .filter-container { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+    .filter-row { display: flex; gap: 4px; justify-content: center; width: 100%; flex-wrap: wrap; }
+    .filter-btn { padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 16px; background: white; color: #475569; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: center; }
+    .filter-btn.active { background: #2563eb; color: white; border-color: #2563eb; box-shadow: 0 2px 4px rgba(37,99,235,0.2); }
+    .filter-btn.level-btn { border-color: #cbd5e1; background: #f1f5f9; }
+
+    .progress-container { width: 100%; max-width: 480px; background: #e2e8f0; height: 6px; border-radius: 3px; margin-bottom: 12px; overflow: hidden; }
+    .progress-bar { height: 100%; background: #2563eb; width: 2%; transition: width 0.3s; }
+
+    .card-container { perspective: 1000px; width: 100%; max-width: 480px; height: 320px; margin-bottom: 16px; cursor: pointer; }
+    .card { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.5s cubic-bezier(0.4, 0.2, 0.2, 1); border-radius: 20px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.06), 0 8px 10px -6px rgba(0,0,0,0.04); }
+    .card.flipped { transform: rotateY(180deg); }
+    
+    .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; background: white; border: 1px solid #e2e8f0; }
+    .card-back { transform: rotateY(180deg); background: #f8fafc; border-color: #cbd5e1; }
+    
+    .card-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+    .tag { padding: 4px 10px; background: #eff6ff; color: #1d4ed8; font-size: 11px; font-weight: 700; border-radius: 8px; text-transform: uppercase; }
+    
+    .level-badge { font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 12px; }
+    .level-초급 { background: #dcfce7; color: #15803d; }
+    .level-중급 { background: #fef9c3; color: #a16207; }
+    .level-고급 { background: #fee2e2; color: #b91c1c; }
+
+    .card-visual-icon { font-size: 42px; text-align: center; margin-top: 6px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); pointer-events: none; }
+
+    .term-ko { font-size: 24px; font-weight: 800; color: #0f172a; text-align: center; line-height: 1.2; margin-top: 4px; }
+    .term-en { font-size: 13px; color: #64748b; font-weight: 500; text-align: center; margin-top: 4px; word-break: break-all; }
+    .flip-hint { font-size: 11px; color: #94a3b8; text-align: center; }
+    
+    .def-title { font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 4px; }
+    .def-text { font-size: 14px; color: #1e293b; font-weight: 600; line-height: 1.45; word-break: keep-all; }
+    .analogy-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; border-radius: 8px; margin-top: 8px; }
+    .analogy-title { font-size: 11px; font-weight: 700; color: #b45309; }
+    .analogy-text { font-size: 13px; font-weight: 700; color: #78350f; margin-top: 2px; word-break: keep-all; }
+
+    .controls { display: flex; gap: 8px; align-items: center; justify-content: space-between; width: 100%; max-width: 480px; }
+    .btn { flex: 1; padding: 12px 0; border: none; border-radius: 12px; background: #0f172a; color: white; font-weight: 700; cursor: pointer; transition: background 0.2s; font-size: 14px; text-align: center; }
+    .btn:active { background: #334155; transform: scale(0.98); }
+    .counter { font-size: 13px; font-weight: 700; color: #475569; min-width: 50px; text-align: center; }
+
+    .footer-info {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background-color: #ffffff;
+      padding: 8px 12px;
+      font-size: 10px;
+      color: #94a3b8;
+      text-align: center;
+      line-height: 1.4;
+      word-break: keep-all;
+      border-top: 1px solid #e2e8f0;
+      z-index: 1000;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.03);
+    }
+  </style>
+</head>
+<body oncontextmenu="return false" onselectstart="return false" ondragstart="return false">
+
+  <h1>📱 테크포켓 (Tech Pocket)</h1>
+  <p class="subtitle">AI · 클라우드 · 네트워크 필수 용어 암기장</p>
+
+  <div class="filter-container">
+    <div class="filter-row">
+      <button class="filter-btn active" onclick="filterCategory('전체')">전체 (52)</button>
+      <button class="filter-btn" onclick="filterCategory('기초')">기초</button>
+      <button class="filter-btn" onclick="filterCategory('서비스 모델')">모델</button>
+      <button class="filter-btn" onclick="filterCategory('AWS 핵심')">AWS</button>
+      <button class="filter-btn" onclick="filterCategory('AI/데이터')">AI/데이터</button>
+      <button class="filter-btn" onclick="filterCategory('운영/보안')">보안</button>
+    </div>
+    <div class="filter-row">
+      <button class="filter-btn level-btn" onclick="filterLevel('초급')">🟢 초급</button>
+      <button class="filter-btn level-btn" onclick="filterLevel('중급')">🟡 중급</button>
+      <button class="filter-btn level-btn" onclick="filterLevel('고급')">🔴 고급</button>
+    </div>
+  </div>
+
+  <div class="progress-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <div class="card-container" onclick="flipCard()">
+    <div class="card" id="card">
+      <div class="card-face card-front">
+        <div class="card-header">
+          <span class="tag" id="cardCategory">카테고리</span>
+          <span class="level-badge" id="cardLevel">초급</span>
+        </div>
+        <div>
+          <div class="card-visual-icon" id="cardIcon">☁️</div>
+          <div class="term-ko" id="termKo">용어 명칭</div>
+          <div class="term-en" id="termEn">English Term</div>
+        </div>
+        <div class="flip-hint">👆 터치해서 정답 및 비유 확인하기</div>
+      </div>
+      <div class="card-face card-back">
+        <div>
+          <div class="def-title">한 줄 핵심 정의</div>
+          <div class="def-text" id="defText">정의 내용이 들어갑니다.</div>
+        </div>
+        <div class="analogy-box">
+          <div class="analogy-title">💡 실생활 비유</div>
+          <div class="analogy-text" id="analogyText">비유 내용이 들어갑니다.</div>
+        </div>
+        <div class="flip-hint">👆 터치해서 다시 문제 보기</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn" onclick="prevCard()">이전</button>
+    <span class="counter" id="counter">1 / 52</span>
+    <button class="btn" onclick="nextCard()">다음</button>
+    <button class="btn" style="background:#2563eb;" onclick="shuffleCards()">🎲 섞기</button>
+  </div>
+
+  <footer class="footer-info">
+    <span>by Tol9u</span> | 
+    <span>문의: abc@gam.com</span> | 
+    <span>Copyright © 2026 Tol9u. All rights reserved.</span><br>
+    <span>무단 복제·전재·배포 및 상업적 이용을 금합니다.</span>
+  </footer>
+
+  <script>
+    document.addEventListener('keydown', function(e) {
+      if (
+        e.keyCode === 123 || 
+        (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || 
+        (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83 || e.keyCode === 67))
+      ) {
+        e.preventDefault();
+        return false;
+      }
+    });
+
+    setInterval(function() {
+      (function(a){
+        return (function(a){
+          return (Function('debugger')());
+        })(a);
+      })();
+    }, 1000);
+
+    const allCards = [
+      { level: "초급", category: "기초", icon: "🌐", ko: "클라우드 컴퓨팅", en: "Cloud Computing", def: "IT 자원을 직접 사지 않고 인터넷으로 빌려 쓰는 방식", analogy: "수도 / 전기 요금제" },
+      { level: "초급", category: "기초", icon: "🏢", ko: "온프레미스", en: "On-premise", def: "서버 장비를 회사가 직접 사서 자체 전산실에 두고 운영하는 방식", analogy: "자가 주택 소유" },
+      { level: "초급", category: "기초", icon: "🖥️", ko: "서버", en: "Server", def: "다른 컴퓨터에게 데이터나 서비스를 제공하는 컴퓨터", analogy: "식당 주방장" },
+      { level: "초급", category: "기초", icon: "💻", ko: "인스턴스", en: "Instance", def: "클라우드에서 빌려 쓰는 가상 컴퓨터 한 대", analogy: "임대한 원룸 1채" },
+      { level: "초급", category: "기초", icon: "📈", ko: "오토스케일링", en: "Auto Scaling", def: "트래픽 양에 따라 서버 수를 자동으로 늘리고 줄여 주는 기능", analogy: "마트 계산대 가동 수 조절" },
+      { level: "초급", category: "기초", icon: "⚖️", ko: "로드밸런싱", en: "Load Balancing", def: "들어오는 요청을 여러 서버에 고르게 나눠 과부하를 막는 기술", analogy: "공항 입국심사대 줄 분산" },
+      { level: "초급", category: "서비스 모델", icon: "🏗️", ko: "IaaS", en: "Infrastructure as a Service", def: "서버·스토리지·네트워크 같은 IT 인프라를 빌려 쓰는 모델", analogy: "빈 땅(대지) 임대" },
+      { level: "초급", category: "서비스 모델", icon: "🛠️", ko: "PaaS", en: "Platform as a Service", def: "앱을 개발·실행할 수 있는 플랫폼(환경)까지 제공하는 모델", analogy: "공유 주방" },
+      { level: "초급", category: "서비스 모델", icon: "📱", ko: "SaaS", en: "Software as a Service", def: "완성된 소프트웨어를 설치 없이 웹으로 바로 사용하는 모델", analogy: "배달 음식 / 밀키트" },
+      { level: "초급", category: "AWS 핵심", icon: "☁️", ko: "Amazon EC2", en: "Elastic Compute Cloud", def: "AWS에서 가상 서버를 필요할 때 빌려 쓰는 컴퓨팅 서비스", analogy: "클라우드 속 가상 컴퓨터" },
+      { level: "초급", category: "AWS 핵심", icon: "🪣", ko: "Amazon S3", en: "Simple Storage Service", def: "어떤 데이터든 무제한 담아 두는 대용량 저장 서비스", analogy: "무제한 클라우드 드라이브" },
+      { level: "초급", category: "AWS 핵심", icon: "🗄️", ko: "Amazon RDS", en: "Relational Database Service", def: "데이터베이스 설치·백업·업데이트를 대신 관리해 주는 서비스", analogy: "자동 정리 창고" },
+      { level: "초급", category: "AWS 핵심", icon: "⚡", ko: "AWS Lambda", en: "AWS Lambda", def: "서버 없이 특정 이벤트가 발생할 때만 코드를 실행하는 서비스", analogy: "센서형 자동 등" },
+      { level: "초급", category: "운영/보안", icon: "🧱", ko: "방화벽", en: "Firewall", def: "허용된 통신만 통과시키고 위험한 접근은 차단하는 보안 장치", analogy: "건물 입구 경비원" },
+      { level: "초급", category: "운영/보안", icon: "🔑", ko: "MFA", en: "Multi-Factor Authentication", def: "비밀번호에 더해 한 단계 더 확인하는 보안 강화 방식", analogy: "비밀번호 + OTP 인증" },
+      { level: "초급", category: "AI/데이터", icon: "🎨", ko: "생성형 AI", en: "Generative AI", def: "글·이미지·코드 등 새로운 콘텐츠를 스스로 만들어내는 AI", analogy: "창작하는 예술가/작가" },
+      { level: "초급", category: "기초", icon: "💾", ko: "데이터베이스", en: "Database", def: "데이터를 체계적으로 저장하고 꺼내 쓰도록 정리해 둔 시스템", analogy: "도서관 서가" },
+      { level: "초급", category: "기초", icon: "🔌", ko: "API", en: "Application Programming Interface", def: "프로그램끼리 정해진 방식으로 요청과 응답을 주고받는 창구", analogy: "식당의 점원(메뉴판)" },
+      { level: "초급", category: "AWS 핵심", icon: "🟫", ko: "Amazon EBS", en: "Elastic Block Store", def: "EC2 서버에 붙여 쓰는 클라우드 하드디스크", analogy: "외장 하드디스크" },
+      { level: "초급", category: "운영/보안", icon: "📸", ko: "스냅샷", en: "Snapshot", def: "특정 시점의 저장장치 상태를 통째로 찍어 둔 백업본", analogy: "현장 사진 촬영" },
+
+      { level: "중급", category: "AI/데이터", icon: "🧠", ko: "LLM", en: "Large Language Model", def: "방대한 텍스트를 학습해 사람처럼 언어를 이해·생성하는 AI", analogy: "초대형 인공지능 뇌" },
+      { level: "중급", category: "AI/데이터", icon: "📖", ko: "RAG", en: "Retrieval-Augmented Generation", def: "AI가 답하기 전에 외부 자료를 찾아보고 답하게 하는 기술", analogy: "시험 때 오픈북 테스트" },
+      { level: "중급", category: "AI/데이터", icon: "🎯", ko: "Fine-Tuning", en: "미세조정", def: "사전 학습된 거대 모델을 특정 분야 데이터로 추가 재학습", analogy: "범재에게 의학 전문 교육시키기" },
+      { level: "중급", category: "AI/데이터", icon: "✍️", ko: "Prompt Engineering", en: "프롬프트 엔지니어링", def: "AI가 원하는 답을 내놓도록 지시문(질문)을 최적화하는 기술", analogy: "유능한 비서에게 명확한 업무 지시서 쓰기" },
+      { level: "중급", category: "AI/데이터", icon: "📍", ko: "Embedding", en: "임베딩", def: "텍스트나 이미지를 컴퓨터가 이해하는 숫자 배열(벡터)로 변환", analogy: "글을 지도 위의 위치 좌표로 변환" },
+      { level: "중급", category: "AI/데이터", icon: "👻", ko: "Hallucination", en: "환각 현상", def: "AI가 거짓 정보를 진짜인 것처럼 유창하게 답하는 오류", analogy: "자신 있게 거짓말하는 사람" },
+      { level: "중급", category: "AI/데이터", icon: "🗜️", ko: "Quantization", en: "양자화", def: "AI 모델의 정밀도를 조절해 메모리 용량과 속도를 대폭 개선", analogy: "고화질 영상 용량을 압축하기" },
+      { level: "중급", category: "AWS 핵심", icon: "🏬", ko: "Amazon Bedrock", en: "Amazon Bedrock", def: "여러 회사의 AI 모델(LLM)을 API로 골라 쓰게 해주는 서비스", analogy: "AI 모델 종합 쇼핑몰" },
+      { level: "중급", category: "AWS 핵심", icon: "⚡", ko: "Amazon DynamoDB", en: "Amazon DynamoDB", def: "빠른 속도가 강점인 AWS의 비관계형(NoSQL) 데이터베이스", analogy: "초고속 메모용 데이터 보관소" },
+      { level: "중급", category: "AWS 핵심", icon: "🛡️", ko: "Amazon VPC", en: "Virtual Private Cloud", def: "AWS 안에 나만 쓰는 논리적으로 격리된 전용 네트워크 공간", analogy: "개인 정원 울타리" },
+      { level: "중급", category: "AWS 핵심", icon: "🪪", ko: "AWS IAM", en: "Identity and Access Management", def: "AWS 자원에 대한 사용자별 접근 권한을 관리하는 서비스", analogy: "건물 출입증 발급소" },
+      { level: "중급", category: "운영/보안", icon: "🚀", ko: "CDN", en: "Content Delivery Network", def: "콘텐츠를 사용자와 가까운 서버에서 전달해 속도를 높이는 기술", analogy: "동네 집 앞 편의점" },
+      { level: "중급", category: "운영/보안", icon: "🗝️", ko: "SSO", en: "Single Sign-On", def: "한 번 로그인하면 여러 서비스에 자동으로 로그인되는 방식", analogy: "마스터키" },
+      { level: "중급", category: "운영/보안", icon: "📜", ko: "SLA", en: "Service Level Agreement", def: "서비스 제공자가 보장하는 가동률 등 품질 약속 기준", analogy: "품질 보증서" },
+      { level: "중급", category: "기초", icon: "🚚", ko: "마이그레이션", en: "Migration", def: "기존 시스템과 데이터를 새로운 클라우드 환경으로 옮기는 작업", analogy: "이사" },
+      { level: "중급", category: "기초", icon: "🚕", ko: "서버리스", en: "Serverless", def: "서버 관리 없이 코드만 올려서 실행하는 개발 방식", analogy: "자차 없이 '택시 이용'" },
+      { level: "중급", category: "기초", icon: "♾️", ko: "DevOps", en: "DevOps", def: "개발(Dev)과 운영(Ops)을 합쳐 더 빠르게 서비스를 배포하는 방식", analogy: "원스톱 스피드 협업팀" },
+      { level: "중급", category: "AWS 핵심", icon: "🧭", ko: "Amazon Route 53", en: "Amazon Route 53", def: "AWS의 DNS 서비스로 도메인 연결과 트래픽을 관리", analogy: "AWS 전용 네비게이션" },
+
+      { level: "고급", category: "AI/데이터", icon: "🤖", ko: "에이전틱 AI", en: "Agentic AI", def: "스스로 목표를 세우고 여러 단계를 계획·실행하는 자율 AI", analogy: "스스로 판단해 일하는 자율 비서" },
+      { level: "고급", category: "AI/데이터", icon: "📌", ko: "LoRA", en: "Low-Rank Adaptation", def: "전체 모델 대신 일부 매개변수만 가볍게 미세조정하는 기술", analogy: "책 전체를 안 새로 쓰고 포스트잇 메모 추가" },
+      { level: "고급", category: "AI/데이터", icon: "🧩", ko: "Tokenization", en: "토큰화", def: "문장을 AI가 처리할 수 있는 최소 단위(토큰)로 쪼개는 작업", analogy: "문장을 레고 블록 조각으로 나누기" },
+      { level: "고급", category: "AI/데이터", icon: "🎓", ko: "RLHF", en: "Reinforcement Learning from Human Feedback", def: "사람의 피드백을 반영하여 AI의 답변 품질을 강화 학습", analogy: "칭찬과 교정으로 학생 가르치기" },
+      { level: "고급", category: "AI/데이터", icon: "🔗", ko: "LangChain", en: "랭체인", def: "LLM을 외부 DB, API와 연결해 복잡한 AI 앱을 개발하는 프레임워크", analogy: "레고 블록을 연결해 조립품 만들기" },
+      { level: "고급", category: "AI/데이터", icon: "🚧", ko: "Guardrails", en: "가드레일", def: "AI가 유해하거나 편향된 답을 내놓지 못하도록 막는 안전장치", analogy: "도로 옆의 안전 펜스" },
+      { level: "고급", category: "AI/데이터", icon: "📊", ko: "Vector DB", en: "Vector Database", def: "단어의 '의미적 유사도'를 계산해 비슷한 개념을 고속 검색하는 DB", analogy: "연관 개념 전문 도서관" },
+      { level: "고급", category: "AI/데이터", icon: "👑", ko: "Sovereign AI", en: "소버린 AI", def: "외부 종속 없이 한 국가/기업이 통제권을 가진 자체 AI 구축", analogy: "자체 기술 국방 무기 체계" },
+      { level: "고급", category: "AI/데이터", icon: "👁️", ko: "Multi-Modal AI", en: "멀티모달 AI", def: "텍스트뿐만 아니라 이미지, 음성, 영상까지 동시에 이해하는 AI", analogy: "시각·청각을 모두 갖춘 사람" },
+      { level: "고급", category: "AWS 핵심", icon: "🚢", ko: "AWS Fargate", en: "AWS Fargate", def: "서버 관리 없이 컨테이너를 실행하게 해 주는 서버리스 서비스", analogy: "자동 운항 컨테이너 선박" },
+      { level: "고급", category: "AWS 핵심", icon: "📊", ko: "Amazon Redshift", en: "Amazon Redshift", def: "대량의 데이터를 빠르게 분석하는 데이터 웨어하우스", analogy: "초대형 데이터 고속 분석기" },
+      { level: "고급", category: "AWS 핵심", icon: "⚡", ko: "Amazon ElastiCache", en: "Amazon ElastiCache", def: "자주 쓰는 데이터를 메모리에 담아 초고속으로 추출하는 캐시", analogy: "자주 쓰는 물건 보관함" },
+      { level: "고급", category: "기초", icon: "🏗️", ko: "쿠버네티스", en: "Kubernetes", def: "수많은 컨테이너를 자동으로 배포, 확장, 관리해 주는 도구", analogy: "항구의 자동 관제 크레인" },
+      { level: "고급", category: "기초", icon: "⚙️", ko: "CI/CD", en: "Continuous Integration / Delivery", def: "코드 수정을 자동으로 통합·테스트·배포하는 파이프라인", analogy: "자동화된 공장 제품 출하 라인" }
+    ];
+
+    let currentList = [...allCards];
+    let currentIndex = 0;
+
+    function renderCard() {
+      const cardEl = document.getElementById('card');
+      cardEl.classList.remove('flipped');
+      
+      if(currentList.length === 0) {
+        document.getElementById('cardCategory').innerText = "없음";
+        document.getElementById('cardLevel').innerText = "-";
+        document.getElementById('cardLevel').className = "level-badge";
+        document.getElementById('cardIcon').innerText = "❓";
+        document.getElementById('termKo').innerText = "검색 결과 없음";
+        document.getElementById('termEn').innerText = "No Cards Found";
+        document.getElementById('defText').innerText = "선택한 조건에 해당하는 용어가 없습니다.";
+        document.getElementById('analogyText').innerText = "상단의 다른 필터를 터치해 보세요.";
+        document.getElementById('counter').innerText = "0 / 0";
+        document.getElementById('progressBar').style.width = "0%";
+        return;
+      }
+
+      const item = currentList[currentIndex];
+      document.getElementById('cardCategory').innerText = item.category;
+      
+      const levelEl = document.getElementById('cardLevel');
+      levelEl.innerText = item.level;
+      levelEl.className = `level-badge level-${item.level}`;
+
+      document.getElementById('cardIcon').innerText = item.icon || "☁️";
+      document.getElementById('termKo').innerText = item.ko;
+      document.getElementById('termEn').innerText = item.en;
+      document.getElementById('defText').innerText = item.def;
+      document.getElementById('analogyText').innerText = item.analogy;
+      
+      document.getElementById('counter').innerText = `${currentIndex + 1} / ${currentList.length}`;
+      document.getElementById('progressBar').style.width = `${((currentIndex + 1) / currentList.length) * 100}%`;
+    }
+
+    function flipCard() {
+      if(currentList.length > 0) {
+        document.getElementById('card').classList.toggle('flipped');
+      }
+    }
+
+    function nextCard() {
+      if (currentIndex < currentList.length - 1) {
+        currentIndex++;
+        renderCard();
+      }
+    }
+
+    function prevCard() {
+      if (currentIndex > 0) {
+        currentIndex--;
+        renderCard();
+      }
+    }
+
+    function shuffleCards() {
+      currentList.sort(() => Math.random() - 0.5);
+      currentIndex = 0;
+      renderCard();
+    }
+
+    function filterCategory(cat) {
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      if (cat === '전체') {
+        currentList = [...allCards];
+      } else {
+        currentList = allCards.filter(c => c.category === cat);
+      }
+      currentIndex = 0;
+      renderCard();
+    }
+
+    function filterLevel(lvl) {
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      currentList = allCards.filter(c => c.level === lvl);
+      currentIndex = 0;
+      renderCard();
+    }
+
+    renderCard();
+  </script>
+</body>
+</html>
